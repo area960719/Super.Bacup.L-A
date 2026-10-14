@@ -1,32 +1,50 @@
 # main.py
-# Punto de entrada de SuperBackup
-
 import os
+import sys
+
 from core.db import DB
 from core.engine import BackupEngine
+from core.restore import RestoreEngine
+from core.scheduler import Scheduler
+from core.retention import Retention
 from ui.window import MainWindow
 
 
 def main():
     print("🚀 Iniciando SuperBackup...")
 
-    # 1. Ruta donde se guardará la base de datos (junto al ejecutable)
-    base_dir = os.path.dirname(os.path.abspath(__file__))
+    if getattr(sys, "frozen", False):
+        base_dir = os.path.dirname(sys.executable)
+    else:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+
     db_path = os.path.join(base_dir, "superbackup.db")
-
-    # 2. Crear conexión a la base de datos (crea las tablas si no existen)
     db = DB(db_path)
-    print(f"✅ Base de datos lista en: {db_path}")
+    print(f"✅ Base de datos: {db_path}")
 
-    # 3. Crear el motor de backup
     engine = BackupEngine(db)
-    print("✅ Motor de backup cargado.")
+    restore_engine = RestoreEngine(db)
+    retention = Retention(db)
 
-    # 4. Abrir la ventana principal (bloquea hasta que el usuario la cierre)
+    # Aplicar retención después de cada backup
+    original_run = engine.run
+    def run_with_retention(job_id):
+        original_run(job_id)
+        try:
+            retention.apply(job_id)
+        except Exception as e:
+            print(f"[Retention] error: {e}")
+    engine.run = run_with_retention
+
+    # Arrancar planificador
+    scheduler = Scheduler(db, engine)
+    print("✅ Planificador activo.")
+
     print("🖥️  Abriendo interfaz gráfica...")
-    app = MainWindow(db, engine)
+    app = MainWindow(db, engine, restore_engine)
     app.run()
 
+    scheduler.stop()
     print("👋 SuperBackup cerrado.")
 
 
