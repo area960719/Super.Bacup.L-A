@@ -1,5 +1,4 @@
-# .github/workflows/python-app.yml
-name: Compilar SuperBackup y subir ZIP
+name: Compilar SuperBackup (.exe)
 
 on:
   push:
@@ -8,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest  # <-- CLAVE: Usamos Windows para generar un .exe
     steps:
       - name: Descargar el código
         uses: actions/checkout@v4
@@ -18,19 +17,14 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Instalar dependencias (si las tienes)
-        run: |
-          python -m pip install --upgrade pip
-          # Si tienes un requirements.txt, descomenta la línea de abajo:
-          # pip install -r requirements.txt
+      - name: Instalar PyInstaller
+        run: pip install pyinstaller
 
-      - name: Empaquetar todo en un ZIP
-        run: |
-          zip -r SuperBackup.zip . -x "*.git*" -x "*.github*"
+      - name: Compilar el ejecutable
+        run: pyinstaller --onefile --windowed --name SuperBackup main.py
 
-      - name: Subir el ZIP como artefacto descargable
+      - name: Subir el .exe como artefacto descargable
         uses: actions/upload-artifact@v4
         with:
-          name: SuperBackup-${{ github.sha }}
-          path: SuperBackup.zip
-          retention-days: 30
+          name: SuperBackup-Windows
+          path: dist/SuperBackup.exe
