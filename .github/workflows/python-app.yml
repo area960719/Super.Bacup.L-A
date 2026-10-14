@@ -3,11 +3,11 @@ name: Compilar SuperBackup (.exe)
 on:
   push:
     branches: [ "main" ]
-  workflow_dispatch:   # Permite ejecutarlo manualmente
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: windows-latest  # <-- CLAVE: Usamos Windows para generar un .exe
+    runs-on: windows-latest
     steps:
       - name: Descargar el código
         uses: actions/checkout@v4
@@ -21,8 +21,8 @@ jobs:
         run: pip install pyinstaller
 
       - name: Compilar el ejecutable
-        run: pyinstaller --onefile --windowed --name SuperBackup SuperBackup/main.py
-   
+        run: pyinstaller --onefile --windowed --hidden-import=tkinter --hidden-import=sqlite3 --hidden-import=core --hidden-import=ui --name SuperBackup SuperBackup/main.py
+
       - name: Subir el .exe como artefacto descargable
         uses: actions/upload-artifact@v4
         with:
