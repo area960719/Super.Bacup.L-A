@@ -21,8 +21,8 @@ jobs:
         run: pip install pyinstaller
 
       - name: Compilar el ejecutable
-        run: pyinstaller --onefile --windowed --name SuperBackup main.py
-
+        run: pyinstaller --onefile --windowed --name SuperBackup SuperBackup/main.py
+   
       - name: Subir el .exe como artefacto descargable
         uses: actions/upload-artifact@v4
         with:
